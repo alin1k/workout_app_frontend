@@ -1,0 +1,21 @@
+:root {
+  --bg:          oklch(0.965 0.012 145);
+  --bg-deep:     oklch(0.945 0.018 148);
+  --surface:     oklch(0.995 0.004 130);
+  --surface-alt: oklch(0.955 0.013 146);
+  --border:      oklch(0.905 0.017 146);
+  --text:        oklch(0.31 0.026 154);
+  --text-muted:  oklch(0.52 0.022 150);
+  --primary:     oklch(0.50 0.078 152);
+  --primary-deep: oklch(0.40 0.072 153);
+  --accent:      oklch(0.70 0.062 150);
+  --accent-soft: oklch(0.90 0.045 148);
+  --on-primary:  oklch(0.985 0.012 145);
+  --danger:      oklch(0.53 0.13 28);
+  --danger-soft: oklch(0.93 0.04 30);
+
+  --page-bg: var(--bg-deep);
+  --font-display: 'Hanken Grotesk', sans-serif;
+  --font-body: 'Mulish', sans-serif;
+  --radius: 26px;
+}
