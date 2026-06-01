@@ -1,5 +1,9 @@
 # React + Vite
 
+## Backend
+
+The app talks to the Flask backend at `http://localhost:5000` by default — start it before `npm run dev`. Override with `VITE_API_BASE_URL` in `.env.development` (see `.env.example`). All HTTP calls go through `src/lib/api.js`; do not call `fetch` directly from components.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
