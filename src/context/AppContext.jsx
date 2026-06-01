@@ -9,11 +9,31 @@ const AppContext = createContext(null);
 let _nextId = 100000;
 const nextId = () => _nextId++;
 
+// Derive the shallow count fields a list entry uses, from a detail tree.
+function shallowFromTree(w) {
+  const muscles = new Set();
+  let setCount = 0;
+  w.exercises.forEach((ex) => {
+    setCount += ex.sets.length;
+    const m = ex.exercise_type?.muscle_group;
+    if (m) muscles.add(m);
+  });
+  return {
+    exercise_count: w.exercises.length,
+    set_count: setCount,
+    muscle_groups: [...muscles].sort(),
+  };
+}
+
 export function AppProvider({ children }) {
   const [types, setTypes] = useState([]);
   const [workouts, setWorkouts] = useState([]);
   const [workoutsStatus, setWorkoutsStatus] = useState('loading');
   const [workoutsError, setWorkoutsError] = useState(null);
+  const [currentWorkout, setCurrentWorkout] = useState(null);
+  const [currentWorkoutStatus, setCurrentWorkoutStatus] = useState('idle');
+  const [currentWorkoutError, setCurrentWorkoutError] = useState(null);
+  const [currentNotFound, setCurrentNotFound] = useState(false);
   const [sheet, setSheet] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [toast, setToast] = useState(null);
@@ -50,6 +70,46 @@ export function AppProvider({ children }) {
     fetchWorkouts();
   }, [fetchWorkouts]);
 
+  // ---------- current workout (detail page) ----------
+  const fetchWorkout = useCallback(async (id) => {
+    setCurrentWorkoutStatus('loading');
+    setCurrentWorkoutError(null);
+    setCurrentNotFound(false);
+    const { data, error } = await api.get(`/api/workouts/${id}`);
+    if (error) {
+      if (error.status === 404) {
+        setCurrentNotFound(true);
+      } else {
+        setCurrentWorkoutError(error);
+      }
+      setCurrentWorkoutStatus('error');
+      return;
+    }
+    setCurrentWorkout(data);
+    setCurrentWorkoutStatus('ready');
+    // Patch the matching shallow list entry so any drift between the list
+    // and the freshly-loaded detail gets reconciled.
+    setWorkouts((ws) => ws.map((w) =>
+      w.id === data.id
+        ? {
+            ...w,
+            name: data.name,
+            performed_at: data.performed_at,
+            notes: data.notes,
+            created_at: data.created_at,
+            ...shallowFromTree(data),
+          }
+        : w
+    ));
+  }, []);
+
+  const clearCurrentWorkout = useCallback(() => {
+    setCurrentWorkout(null);
+    setCurrentWorkoutStatus('idle');
+    setCurrentWorkoutError(null);
+    setCurrentNotFound(false);
+  }, []);
+
   // ---------- sheet / confirm ----------
   const openSheet = (s) => setSheet(s);
   const closeSheet = () => setSheet(null);
@@ -57,18 +117,16 @@ export function AppProvider({ children }) {
   const closeConfirm = () => setConfirm(null);
 
   // ---------- workout mutations ----------
-  const patchWorkout = (id, fn) =>
+  const patchWorkoutInList = (id, fn) =>
     setWorkouts((ws) => ws.map((w) => (w.id === id ? fn(w) : w)));
 
+  const patchCurrentWorkout = (fn) =>
+    setCurrentWorkout((w) => (w ? fn(w) : w));
+
   // POST /api/workouts → 201 with the created workout (no count fields).
-  // On error, leaves the sheet open and returns { error } so the form can
-  // render the message inline.
   const createWorkout = async (data) => {
     const { data: created, error } = await api.post('/api/workouts', data);
     if (error) return { error };
-    // Backend POST response doesn't include count fields; attach zeros so the
-    // list state shape stays consistent with what GET /api/workouts returns
-    // (Task 12 reads these for the card summary).
     const shallow = {
       ...created,
       exercise_count: 0,
@@ -81,45 +139,57 @@ export function AppProvider({ children }) {
     return { id: created.id };
   };
 
-  // PUT /api/workouts/<id> → 200 with the full nested tree. For the list we
-  // only patch the editable fields, preserving the counts already there.
-  // Detail-page state (Task 5) will own the full tree.
+  // PUT /api/workouts/<id> → 200 with the full nested tree.
   const saveWorkout = async (id, data) => {
     const { data: updated, error } = await api.put(`/api/workouts/${id}`, data);
     if (error) return { error };
-    patchWorkout(id, (w) => ({
+    patchWorkoutInList(id, (w) => ({
       ...w,
       name: updated.name,
       performed_at: updated.performed_at,
       notes: updated.notes,
     }));
+    // Mirror the change into currentWorkout if we're editing while on the
+    // detail page.
+    setCurrentWorkout((cw) =>
+      cw && cw.id === id
+        ? { ...cw, name: updated.name, performed_at: updated.performed_at, notes: updated.notes }
+        : cw
+    );
     setSheet(null);
     flash('Saved', 'check');
     return { error: null };
   };
 
-  // DELETE /api/workouts/<id> → 204. 404 is treated as success (it's gone
-  // either way). Other errors leave the workout in state and flash an alert.
+  // DELETE /api/workouts/<id> → 204. 404 is treated as success.
   const deleteWorkout = async (id) => {
     const { error } = await api.del(`/api/workouts/${id}`);
     setConfirm(null);
     if (error && error.status !== 404) {
       flash(error.message || 'Could not delete workout', 'alert');
-      return;
+      return { error };
     }
     setWorkouts((ws) => ws.filter((w) => w.id !== id));
+    // If the deleted workout was being viewed, drop it from detail state too;
+    // WorkoutDetail's effect will bounce home when it sees status=ready and
+    // currentWorkout=null.
+    setCurrentWorkout((cw) => (cw && cw.id === id ? null : cw));
     flash('Workout deleted', 'trash');
+    return { error: null };
   };
 
-  // ---------- exercise mutations ----------
-  const addExercise = (workoutId, type) => {
-    patchWorkout(workoutId, (w) => ({
+  // ---------- exercise mutations (in-memory; Tasks 7–10 wire to backend) ----------
+  // These now operate on currentWorkout (the detail page's full tree).
+  // The `workoutId` arg is kept in the signature for compatibility but is
+  // not used — currentWorkout.id is the authoritative id.
+  const addExercise = (_workoutId, type) => {
+    patchCurrentWorkout((w) => ({
       ...w,
       exercises: [
         ...w.exercises,
         {
           id: nextId(),
-          workout_id: workoutId,
+          workout_id: w.id,
           exercise_type_id: type.id,
           exercise_type: type,
           order: w.exercises.length + 1,
@@ -131,14 +201,14 @@ export function AppProvider({ children }) {
     flash(type.name + ' added', 'check');
   };
 
-  const removeExercise = (workoutId, exId) =>
-    patchWorkout(workoutId, (w) => ({
+  const removeExercise = (_workoutId, exId) =>
+    patchCurrentWorkout((w) => ({
       ...w,
       exercises: w.exercises.filter((e) => e.id !== exId),
     }));
 
-  const moveExercise = (workoutId, exId, dir) =>
-    patchWorkout(workoutId, (w) => {
+  const moveExercise = (_workoutId, exId, dir) =>
+    patchCurrentWorkout((w) => {
       const arr = [...w.exercises];
       const i = arr.findIndex((e) => e.id === exId);
       const j = i + dir;
@@ -147,9 +217,9 @@ export function AppProvider({ children }) {
       return { ...w, exercises: arr };
     });
 
-  // ---------- set mutations ----------
-  const addSet = (workoutId, exId, set) =>
-    patchWorkout(workoutId, (w) => ({
+  // ---------- set mutations (in-memory; Task 9 wires to backend) ----------
+  const addSet = (_workoutId, exId, set) =>
+    patchCurrentWorkout((w) => ({
       ...w,
       exercises: w.exercises.map((e) =>
         e.id === exId
@@ -169,16 +239,16 @@ export function AppProvider({ children }) {
       ),
     }));
 
-  const removeSet = (workoutId, exId, setId) =>
-    patchWorkout(workoutId, (w) => ({
+  const removeSet = (_workoutId, exId, setId) =>
+    patchCurrentWorkout((w) => ({
       ...w,
       exercises: w.exercises.map((e) =>
         e.id === exId ? { ...e, sets: e.sets.filter((s) => s.id !== setId) } : e
       ),
     }));
 
-  const updateSet = (workoutId, exId, setId, set) =>
-    patchWorkout(workoutId, (w) => ({
+  const updateSet = (_workoutId, exId, setId, set) =>
+    patchCurrentWorkout((w) => ({
       ...w,
       exercises: w.exercises.map((e) =>
         e.id === exId
@@ -196,6 +266,8 @@ export function AppProvider({ children }) {
 
   // ---------- confirm builders ----------
   const askDeleteWorkout = (w) => {
+    // Reads from either the shallow list shape (exercise_count) or the full
+    // tree (exercises[]) — whichever is present at the call site.
     const ex = w.exercise_count ?? w.exercises?.length ?? 0;
     const st = w.set_count ?? w.exercises?.reduce((n, e) => n + e.sets.length, 0) ?? 0;
     setConfirm({
@@ -235,6 +307,10 @@ export function AppProvider({ children }) {
     workouts,
     workoutsStatus,
     workoutsError,
+    currentWorkout,
+    currentWorkoutStatus,
+    currentWorkoutError,
+    currentNotFound,
     types,
     typeById,
     // ui state
@@ -249,6 +325,8 @@ export function AppProvider({ children }) {
     closeConfirm,
     // data actions
     fetchWorkouts,
+    fetchWorkout,
+    clearCurrentWorkout,
     // workout actions
     createWorkout,
     saveWorkout,
