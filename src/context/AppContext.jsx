@@ -145,9 +145,6 @@ export function AppProvider({ children }) {
   const patchWorkoutInList = (id, fn) =>
     setWorkouts((ws) => ws.map((w) => (w.id === id ? fn(w) : w)));
 
-  const patchCurrentWorkout = (fn) =>
-    setCurrentWorkout((w) => (w ? fn(w) : w));
-
   const createWorkout = async (data) => {
     const { data: created, error } = await api.post('/api/workouts', data);
     if (error) return { error };
@@ -355,15 +352,61 @@ export function AppProvider({ children }) {
     return { error: null };
   };
 
-  const moveExercise = (_workoutId, exId, dir) =>
-    patchCurrentWorkout((w) => {
-      const arr = [...w.exercises];
-      const i = arr.findIndex((e) => e.id === exId);
-      const j = i + dir;
-      if (i < 0 || j < 0 || j >= arr.length) return w;
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-      return { ...w, exercises: arr };
+  // PUT /api/exercises/<id> with { order } → 200 returning the full parent
+  // workout. Optimistic local swap; on success replace currentWorkout
+  // wholesale with the response (per locked decision — don't merge). On
+  // failure restore the pre-swap snapshot.
+  const moveExercise = async (_workoutId, exId, dir) => {
+    const w = currentWorkout;
+    if (!w) return { error: null };
+    const wId = w.id;
+    const i = w.exercises.findIndex((e) => e.id === exId);
+    if (i === -1) return { error: null };
+    const j = i + dir;
+    if (j < 0 || j >= w.exercises.length) return { error: null };
+
+    // 1-indexed target order matches the backend's clamping semantics.
+    const targetOrder = j + 1;
+    const snapshot = w;
+
+    // Optimistic swap.
+    setCurrentWorkout((cw) => {
+      if (!cw || cw.id !== wId) return cw;
+      const arr = [...cw.exercises];
+      const idx = arr.findIndex((e) => e.id === exId);
+      const tgt = idx + dir;
+      if (idx < 0 || tgt < 0 || tgt >= arr.length) return cw;
+      [arr[idx], arr[tgt]] = [arr[tgt], arr[idx]];
+      return { ...cw, exercises: arr };
     });
+
+    // Temp-id exercise: not on the server yet. The local swap is enough
+    // for now; the eventual swap to a real id will append it at the
+    // server's max+1 anyway.
+    if (exId < 0) return { error: null };
+
+    const { data: updated, error } = await api.put(
+      `/api/exercises/${exId}`,
+      { order: targetOrder }
+    );
+
+    if (error) {
+      setCurrentWorkout((cw) => (cw && cw.id === wId ? snapshot : cw));
+      flash('Could not move exercise', 'alert');
+      return { error };
+    }
+
+    // Replace currentWorkout with the response wholesale — order values
+    // across all sibling exercises may have shifted.
+    setCurrentWorkout((cw) => (cw && cw.id === wId ? updated : cw));
+    // Reconcile the shallow list entry (counts/muscles unchanged here,
+    // but recomputing keeps the entry in lockstep with the latest tree).
+    patchWorkoutInList(wId, (entry) => ({
+      ...entry,
+      ...shallowFromTree(updated),
+    }));
+    return { error: null };
+  };
 
   // ---------- set mutations (optimistic) ----------
   // POST /api/exercises/<id>/sets. Inserts a temp-id set locally first,
