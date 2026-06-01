@@ -19,7 +19,7 @@ function NewTypeForm({ presetName, existsName, onCreate, onCancel }) {
   const submit = () => {
     setTouched(true);
     if (err) return;
-    onCreate({ name: name.trim(), muscle: muscle || '', description: desc.trim() });
+    onCreate({ name: name.trim(), muscle_group: muscle || '', description: desc.trim() });
   };
 
   return (

@@ -15,7 +15,7 @@ function ExercisePicker({ types, onPick, onCreateType, onClose }) {
     return list.filter(
       (t) =>
         t.name.toLowerCase().includes(query) ||
-        (t.muscle && t.muscle.includes(query))
+        (t.muscle_group && t.muscle_group.includes(query))
     );
   }, [types, query]);
 
@@ -100,7 +100,7 @@ function ExercisePicker({ types, onPick, onCreateType, onClose }) {
                       </span>
                     )}
                   </span>
-                  {t.muscle && <MuscleBadge muscle={t.muscle} outline />}
+                  {t.muscle_group && <MuscleBadge muscle={t.muscle_group} outline />}
                   <span style={{ color: 'var(--text-muted)' }}>
                     <Icon name="plus" size={18} />
                   </span>

@@ -97,7 +97,7 @@ function ExerciseCard({
                 ? 'No sets yet'
                 : sets.length + ' set' + (sets.length !== 1 ? 's' : '')}
             </span>
-            {type && type.muscle && <MuscleBadge muscle={type.muscle} outline />}
+            {type && type.muscle_group && <MuscleBadge muscle={type.muscle_group} outline />}
           </div>
         </div>
         <div className="row" style={{ gap: 0, flex: '0 0 auto' }}>

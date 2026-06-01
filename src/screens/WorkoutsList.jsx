@@ -1,32 +1,30 @@
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
 import { fmtRelative } from '../lib/format.js';
 import Icon from '../components/Icon.jsx';
 import Button from '../components/Button.jsx';
 
-function summarize(workout, typeById) {
+// Reads from the embedded `exercise_type` object so it works on both seed
+// data (denormalized) and the backend's GET /api/workouts/<id> response.
+function summarize(workout) {
   const exCount = workout.exercises.length;
   let setCount = 0;
   const muscles = new Set();
   workout.exercises.forEach((ex) => {
     setCount += ex.sets.length;
-    const t = typeById[ex.typeId];
-    if (t && t.muscle) muscles.add(t.muscle);
+    const m = ex.exercise_type?.muscle_group;
+    if (m) muscles.add(m);
   });
   return { exCount, setCount, muscles: [...muscles] };
 }
 
 function WorkoutsList() {
-  const { workouts, typeById, openSheet } = useApp();
+  const { workouts, openSheet } = useApp();
   const navigate = useNavigate();
   const onOpen = (id) => navigate(`/workouts/${id}`);
   const onNew = () => openSheet({ kind: 'newWorkout' });
 
-  const sorted = useMemo(
-    () => [...workouts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
-    [workouts]
-  );
+  // Server returns workouts in created_at desc order; do not re-sort here.
 
   return (
     <>
@@ -59,7 +57,7 @@ function WorkoutsList() {
 
       <div className="scroll">
         <div className="page">
-          {sorted.length === 0 ? (
+          {workouts.length === 0 ? (
             <div className="empty fade-in" style={{ marginTop: 40 }}>
               <div
                 style={{
@@ -90,14 +88,14 @@ function WorkoutsList() {
               <div className="row between" style={{ marginBottom: 14 }}>
                 <div className="display-xl">This&nbsp;week</div>
                 <span className="chip chip-outline">
-                  {sorted.length} session{sorted.length !== 1 ? 's' : ''}
+                  {workouts.length} session{workouts.length !== 1 ? 's' : ''}
                 </span>
               </div>
               <div className="col gap12">
-                {sorted.map((w) => {
-                  const s = summarize(w, typeById);
-                  const when = new Date(w.performedAt || w.createdAt);
-                  const isToday = fmtRelative(w.performedAt || w.createdAt) === 'Today';
+                {workouts.map((w) => {
+                  const s = summarize(w);
+                  const when = new Date(w.performed_at || w.created_at);
+                  const isToday = fmtRelative(w.performed_at || w.created_at) === 'Today';
                   return (
                     <button key={w.id} className="wcard fade-in" onClick={() => onOpen(w.id)}>
                       <span className={'wcard-date' + (isToday ? ' is-today' : '')}>
@@ -143,7 +141,7 @@ function WorkoutsList() {
         </div>
       </div>
 
-      {sorted.length > 0 && (
+      {workouts.length > 0 && (
         <div className="dock">
           <Button size="lg" className="btn-block" onClick={onNew}>
             <Icon name="plus" size={20} /> New workout

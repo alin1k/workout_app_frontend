@@ -1,8 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { SEED_TYPES, SEED_WORKOUTS } from '../data/seed.js';
-import { uid } from '../lib/id.js';
 
 const AppContext = createContext(null);
+
+// Local integer id generator. Starts past the seed range so newly-created
+// items can't collide with seed ids. Temporary — Task 3 deletes seed.js and
+// makes the backend the id authority.
+let _nextId = 1000;
+const nextId = () => _nextId++;
 
 export function AppProvider({ children }) {
   const [types, setTypes] = useState(SEED_TYPES);
@@ -36,9 +41,9 @@ export function AppProvider({ children }) {
 
   const createWorkout = (data) => {
     const w = {
-      id: uid('w'),
+      id: nextId(),
       ...data,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       exercises: [],
     };
     setWorkouts((ws) => [w, ...ws]);
@@ -63,7 +68,17 @@ export function AppProvider({ children }) {
   const addExercise = (workoutId, type) => {
     patchWorkout(workoutId, (w) => ({
       ...w,
-      exercises: [...w.exercises, { id: uid('e'), typeId: type.id, sets: [] }],
+      exercises: [
+        ...w.exercises,
+        {
+          id: nextId(),
+          workout_id: workoutId,
+          exercise_type_id: type.id,
+          exercise_type: type,
+          order: w.exercises.length + 1,
+          sets: [],
+        },
+      ],
     }));
     setSheet(null);
     flash(type.name + ' added', 'check');
@@ -90,7 +105,20 @@ export function AppProvider({ children }) {
     patchWorkout(workoutId, (w) => ({
       ...w,
       exercises: w.exercises.map((e) =>
-        e.id === exId ? { ...e, sets: [...e.sets, { id: uid('s'), ...set }] } : e
+        e.id === exId
+          ? {
+              ...e,
+              sets: [
+                ...e.sets,
+                {
+                  id: nextId(),
+                  exercise_id: exId,
+                  set_number: e.sets.length + 1,
+                  ...set,
+                },
+              ],
+            }
+          : e
       ),
     }));
 
@@ -114,7 +142,7 @@ export function AppProvider({ children }) {
 
   // ---------- catalog mutations ----------
   const createType = (workoutId, data) => {
-    const type = { id: uid('t'), ...data };
+    const type = { id: nextId(), ...data };
     setTypes((ts) => [...ts, type]);
     addExercise(workoutId, type);
   };
@@ -137,7 +165,7 @@ export function AppProvider({ children }) {
   };
 
   const askRemoveExercise = (workoutId, ex) => {
-    const type = typeById[ex.typeId];
+    const type = ex.exercise_type;
     if (ex.sets.length === 0) {
       removeExercise(workoutId, ex.id);
       return;

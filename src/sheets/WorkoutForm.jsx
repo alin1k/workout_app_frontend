@@ -10,7 +10,7 @@ function WorkoutForm({ initial, onSave, onClose }) {
   const editing = !!initial;
   const [name, setName] = useState(initial ? initial.name : '');
   const [when, setWhen] = useState(
-    initial ? toLocalInput(initial.performedAt) : toLocalInput(new Date().toISOString())
+    initial ? toLocalInput(initial.performed_at) : toLocalInput(new Date().toISOString())
   );
   const [notes, setNotes] = useState(initial ? initial.notes || '' : '');
   const [touched, setTouched] = useState(false);
@@ -21,7 +21,7 @@ function WorkoutForm({ initial, onSave, onClose }) {
     if (nameErr) return;
     onSave({
       name: name.trim(),
-      performedAt: when ? new Date(when).toISOString() : null,
+      performed_at: when ? new Date(when).toISOString() : null,
       notes: notes.trim(),
     });
   };

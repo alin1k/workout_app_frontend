@@ -10,11 +10,11 @@ import AppBar from '../components/AppBar.jsx';
 import ExerciseCard from './ExerciseCard.jsx';
 
 function WorkoutDetail() {
-  const { id } = useParams();
+  const { id: idParam } = useParams();
+  const id = parseInt(idParam, 10);
   const navigate = useNavigate();
   const {
     workouts,
-    typeById,
     openSheet,
     addSet,
     removeSet,
@@ -55,8 +55,8 @@ function WorkoutDetail() {
       <AppBar
         onBack={() => navigate('/')}
         subtitle={
-          fmtRelative(workout.performedAt || workout.createdAt) +
-          (workout.performedAt ? ' · ' + fmtTime(workout.performedAt) : '')
+          fmtRelative(workout.performed_at || workout.created_at) +
+          (workout.performed_at ? ' · ' + fmtTime(workout.performed_at) : '')
         }
         title={workout.name}
         right={
@@ -119,7 +119,7 @@ function WorkoutDetail() {
                 <ExerciseCard
                   key={ex.id}
                   exercise={ex}
-                  type={typeById[ex.typeId]}
+                  type={ex.exercise_type}
                   index={i}
                   total={workout.exercises.length}
                   active={activeEx === ex.id}
