@@ -117,4 +117,14 @@ export const authApi = {
   login: (username, password) =>
     request('POST', '/api/auth/login', { username, password }, { skipAuthHandler: true }),
   me: () => request('GET', '/api/auth/me', undefined, { skipAuthHandler: true }),
+  // skipAuthHandler because the backend answers 401 for a wrong current
+  // password — without the opt-out the global handler would read that as
+  // "session expired" and log the user out mid-form.
+  resetPassword: (currentPassword, newPassword) =>
+    request(
+      'POST',
+      '/api/auth/reset-password',
+      { current_password: currentPassword, new_password: newPassword },
+      { skipAuthHandler: true }
+    ),
 };
