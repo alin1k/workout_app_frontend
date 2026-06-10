@@ -6,7 +6,7 @@ import Icon from './Icon.jsx';
 function UserMenu() {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,6 +42,8 @@ function UserMenu() {
       </button>
       {open && (
         <div className="menu fade-in" role="menu">
+          <div className="menu-header">{user?.username}</div>
+          <div className="menu-divider" role="separator" />
           <button className="menu-item" role="menuitem" onClick={onResetPassword}>
             <Icon name="key" size={18} /> Reset password
           </button>

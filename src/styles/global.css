@@ -133,6 +133,18 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
   -webkit-tap-highlight-color: transparent;
 }
 .menu-item:hover { background: var(--surface-alt); }
+.menu-header {
+  font-family: var(--font-body);
+  font-weight: 800; font-size: 14.5px;
+  color: var(--text);
+  padding: 10px 12px 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.menu-divider {
+  height: 1px; flex: 0 0 auto;
+  margin: 2px 4px;
+  background: color-mix(in oklch, var(--border) 70%, transparent);
+}
 .menu-item-danger { color: var(--danger); }
 .menu-item-danger:hover { background: var(--danger-soft); }
 
