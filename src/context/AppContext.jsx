@@ -31,6 +31,7 @@ function shallowFromTree(w) {
 
 export function AppProvider({ children }) {
   const [types, setTypes] = useState([]);
+  const [muscleGroups, setMuscleGroups] = useState([]);
   const [typesStatus, setTypesStatus] = useState('loading');
   const [typesError, setTypesError] = useState(null);
   const [typesTotal, setTypesTotal] = useState(0);
@@ -146,6 +147,27 @@ export function AppProvider({ children }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTypes();
   }, [fetchTypes]);
+
+  // Distinct muscle groups for the picker's filter chips. Failure is
+  // silent — the chip row just doesn't render.
+  const fetchMuscleGroups = useCallback(async () => {
+    const { data } = await api.get('/exercise-types/muscle-groups');
+    if (data?.data) setMuscleGroups(data.data);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMuscleGroups();
+  }, [fetchMuscleGroups]);
+
+  // Server-side catalog search. Stateless — the picker owns the result
+  // list; the cached `types` pages stay untouched.
+  const searchTypes = useCallback(async ({ q, muscleGroup, offset = 0 } = {}) => {
+    const params = new URLSearchParams({ limit: PAGE_SIZE, offset });
+    if (q) params.set('q', q);
+    if (muscleGroup) params.set('muscle_group', muscleGroup);
+    return api.get(`/exercise-types?${params}`);
+  }, []);
 
   // ---------- current workout (detail page) ----------
   const fetchWorkout = useCallback(async (id) => {
@@ -675,6 +697,15 @@ export function AppProvider({ children }) {
     }
     setTypes((ts) => [...ts, created]);
     setTypesTotal((n) => n + 1);
+    if (created.muscle_group) {
+      setMuscleGroups((gs) =>
+        gs.includes(created.muscle_group)
+          ? gs
+          : [...gs, created.muscle_group].sort((a, b) =>
+              a.toLowerCase().localeCompare(b.toLowerCase())
+            )
+      );
+    }
     addExercise(workoutId, created);
     return { type: created };
   };
@@ -728,6 +759,7 @@ export function AppProvider({ children }) {
     currentWorkoutError,
     currentNotFound,
     types,
+    muscleGroups,
     typesStatus,
     typesError,
     typesTotal,
@@ -750,6 +782,7 @@ export function AppProvider({ children }) {
     fetchWorkout,
     fetchTypes,
     loadMoreTypes,
+    searchTypes,
     clearCurrentWorkout,
     // workout actions
     createWorkout,

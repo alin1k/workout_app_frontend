@@ -86,7 +86,6 @@ function WorkoutForm({ initial, onSave, onClose }) {
             onChange={setName}
             invalid={!!nameErrShown}
             placeholder="Push day"
-            autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') submit();
             }}

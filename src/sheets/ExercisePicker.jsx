@@ -1,42 +1,115 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Button from '../components/Button.jsx';
 import Sheet from '../components/Sheet.jsx';
 import MuscleBadge from '../components/MuscleBadge.jsx';
 import NewTypeForm from './NewTypeForm.jsx';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 function ExercisePicker({
   types,
+  muscleGroups,
   typesStatus,
   typesError,
   typesHasNext,
   typesLoadingMore,
   fetchTypes,
   loadMoreTypes,
+  searchTypes,
   onPick,
   onCreateType,
   onClose,
 }) {
   const [q, setQ] = useState('');
+  const [group, setGroup] = useState(null);
   const [creating, setCreating] = useState(false);
 
-  const query = q.trim().toLowerCase();
-  // Backend already returns types sorted alphabetically — don't re-sort.
-  const filtered = useMemo(() => {
-    if (!query) return types;
-    return types.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        (t.muscle_group && t.muscle_group.includes(query))
-    );
-  }, [types, query]);
+  // Server-side search results, owned by the picker. The cached catalog
+  // pages (`types`) keep serving the default no-filter view.
+  const [results, setResults] = useState([]);
+  const [searchStatus, setSearchStatus] = useState('idle');
+  const [searchError, setSearchError] = useState(null);
+  const [searchHasNext, setSearchHasNext] = useState(false);
+  const [searchLoadingMore, setSearchLoadingMore] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
 
-  const exactExists = filtered.some((t) => t.name.toLowerCase() === query);
+  const query = q.trim();
+  const searching = !!query || !!group;
+
+  // Monotonic request id — responses that arrive after a newer request
+  // started are dropped instead of clobbering fresher results.
+  const reqRef = useRef(0);
+
+  useEffect(() => {
+    if (!searching) {
+      reqRef.current++;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults([]);
+      setSearchStatus('idle');
+      setSearchError(null);
+      setSearchLoadingMore(false);
+      return;
+    }
+    const id = ++reqRef.current;
+    setSearchStatus('loading');
+    setSearchError(null);
+    setSearchLoadingMore(false);
+    // Debounce typing; a chip tap with an empty query fires immediately.
+    const timer = setTimeout(async () => {
+      const { data, error } = await searchTypes({
+        q: query,
+        muscleGroup: group,
+        offset: 0,
+      });
+      if (id !== reqRef.current) return;
+      if (error) {
+        setSearchError(error);
+        setSearchStatus('error');
+        return;
+      }
+      setResults(data?.data || []);
+      setSearchHasNext(!!data?.pagination?.has_next);
+      setSearchStatus('ready');
+    }, query ? SEARCH_DEBOUNCE_MS : 0);
+    return () => clearTimeout(timer);
+  }, [query, group, searching, searchTypes, retryTick]);
+
+  const loadMoreSearch = async () => {
+    const id = ++reqRef.current;
+    setSearchLoadingMore(true);
+    const { data, error } = await searchTypes({
+      q: query,
+      muscleGroup: group,
+      offset: results.length,
+    });
+    if (id !== reqRef.current) return;
+    setSearchLoadingMore(false);
+    if (error) return; // keep the list; the button stays available to retry
+    setResults((rs) => [...rs, ...(data?.data || [])]);
+    setSearchHasNext(!!data?.pagination?.has_next);
+  };
+
+  const shown = searching ? results : types;
+  const isLoading = searching
+    ? searchStatus === 'loading'
+    : typesStatus === 'loading' && types.length === 0;
+  const isError = searching ? searchStatus === 'error' : typesStatus === 'error';
+  const errorObj = searching ? searchError : typesError;
+  const onRetry = searching ? () => setRetryTick((n) => n + 1) : fetchTypes;
+  const hasNext = searching ? searchHasNext : typesHasNext;
+  const loadingMore = searching ? searchLoadingMore : typesLoadingMore;
+  const onLoadMore = searching ? loadMoreSearch : loadMoreTypes;
+
+  const exactExists = shown.some(
+    (t) => t.name.toLowerCase() === query.toLowerCase()
+  );
   const existsName = (n) =>
     types.find((t) => t.name.trim().toLowerCase() === n.trim().toLowerCase());
 
-  const isLoading = typesStatus === 'loading' && types.length === 0;
-  const isError = typesStatus === 'error';
+  // Only a broken default catalog makes the input useless; a failed search
+  // must stay editable so the user can change the query.
+  const inputDisabled = !searching && isError;
 
   return (
     <Sheet
@@ -66,7 +139,7 @@ function ExercisePicker({
               border: '1.5px solid var(--border)',
               borderRadius: 'calc(var(--radius)*0.7 + 2px)',
               padding: '0 12px',
-              opacity: isError ? 0.55 : 1,
+              opacity: inputDisabled ? 0.55 : 1,
             }}
           >
             <span style={{ color: 'var(--text-muted)' }}>
@@ -82,14 +155,46 @@ function ExercisePicker({
               }}
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search movements…"
-              autoFocus
-              disabled={isError}
+              placeholder={group ? `Search in ${group}…` : 'Search movements…'}
+              disabled={inputDisabled}
             />
           </div>
 
+          {muscleGroups.length > 0 && (
+            <div
+              className="row gap8"
+              style={{ overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 2 }}
+              role="group"
+              aria-label="Filter by muscle group"
+            >
+              {muscleGroups.map((g) => {
+                const selected = group === g;
+                return (
+                  <button
+                    key={g}
+                    className={'chip' + (selected ? '' : ' chip-outline')}
+                    style={{
+                      cursor: 'pointer',
+                      flex: '0 0 auto',
+                      fontFamily: 'inherit',
+                      border: selected ? '1px solid transparent' : undefined,
+                    }}
+                    aria-pressed={selected}
+                    onClick={() => setGroup((cur) => (cur === g ? null : g))}
+                  >
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {isLoading ? (
-            <div className="col gap8" aria-busy="true" aria-label="Loading catalog">
+            <div
+              className="col gap8"
+              aria-busy="true"
+              aria-label={searching ? 'Searching' : 'Loading catalog'}
+            >
               {[0, 1, 2].map((i) => (
                 <div key={i} className="pick skeleton" style={{ minHeight: 54 }} />
               ))}
@@ -97,16 +202,18 @@ function ExercisePicker({
           ) : isError ? (
             <div className="empty fade-in" style={{ padding: '14px 8px', gap: 12 }}>
               <div>
-                <div className="h-md" style={{ marginBottom: 4 }}>Couldn’t load catalog</div>
+                <div className="h-md" style={{ marginBottom: 4 }}>
+                  {searching ? 'Search failed' : 'Couldn’t load catalog'}
+                </div>
                 <div className="muted" style={{ fontSize: 13.5, lineHeight: 1.5, maxWidth: 260 }}>
-                  {typesError?.message || 'Try again in a moment.'}
+                  {errorObj?.message || 'Try again in a moment.'}
                 </div>
               </div>
-              <Button variant="soft" onClick={fetchTypes}>
+              <Button variant="soft" onClick={onRetry}>
                 <Icon name="repeat" size={16} /> Retry
               </Button>
             </div>
-          ) : types.length === 0 ? (
+          ) : !searching && types.length === 0 ? (
             <div className="empty" style={{ padding: '20px 10px' }}>
               <div className="muted" style={{ fontSize: 14.5 }}>
                 Your catalog is empty.<br />Add the first movement below.
@@ -114,7 +221,7 @@ function ExercisePicker({
             </div>
           ) : (
             <div className="col gap8">
-              {filtered.map((t) => (
+              {shown.map((t) => (
                 <button key={t.id} className="pick" onClick={() => onPick(t)}>
                   <span style={{ color: 'var(--accent)', flex: '0 0 auto' }}>
                     <Icon name="dumbbell" size={18} />
@@ -141,25 +248,24 @@ function ExercisePicker({
                   </span>
                 </button>
               ))}
-              {filtered.length === 0 && (
+              {searching && shown.length === 0 && (
                 <div
                   className="muted fade-in"
                   style={{ fontSize: 14, padding: '8px 2px', textAlign: 'center' }}
                 >
-                  No movement matches “{q.trim()}”.
+                  {query
+                    ? `No movement matches “${query}”${group ? ` in ${group}` : ''}.`
+                    : `No movements for “${group}” yet.`}
                 </div>
               )}
-              {/* Search filters only the already-loaded pages, so hide
-                  "Load more" while a query is active to avoid implying it
-                  searches the whole catalog. */}
-              {typesHasNext && !query && (
+              {hasNext && (
                 <Button
                   variant="soft"
-                  onClick={loadMoreTypes}
-                  disabled={typesLoadingMore}
+                  onClick={onLoadMore}
+                  disabled={loadingMore}
                   style={{ marginTop: 2 }}
                 >
-                  {typesLoadingMore ? 'Loading…' : 'Load more'}
+                  {loadingMore ? 'Loading…' : 'Load more'}
                 </Button>
               )}
             </div>
@@ -177,7 +283,7 @@ function ExercisePicker({
               onClick={() => setCreating(true)}
             >
               <Icon name="plus" size={18} />{' '}
-              {query && !exactExists ? `Add “${q.trim()}” as new movement` : 'Add new movement'}
+              {query && !exactExists ? `Add “${query}” as new movement` : 'Add new movement'}
             </button>
           )}
         </div>
