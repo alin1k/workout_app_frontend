@@ -211,6 +211,7 @@ function WorkoutDetail() {
                       onUpdateSet={(sid, s) => updateSet(workout.id, ex.id, sid, s)}
                       onMove={(d) => moveExercise(workout.id, ex.id, d)}
                       onRemove={() => askRemoveExercise(workout.id, ex)}
+                      onInfo={() => openSheet({ kind: 'exerciseInfo', type: ex.exercise_type })}
                     />
                   ))}
                 </div>
