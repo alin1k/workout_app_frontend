@@ -92,7 +92,6 @@ function NewTypeForm({ presetName, existsName, onCreate, onCancel }) {
           onChange={setName}
           invalid={!!displayedNameErr}
           placeholder="Pendlay Row"
-          autoFocus
         />
         {dup && (
           <button

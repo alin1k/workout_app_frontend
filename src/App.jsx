@@ -18,12 +18,14 @@ function GlobalOverlays() {
   const {
     workouts,
     types,
+    muscleGroups,
     typesStatus,
     typesError,
     typesHasNext,
     typesLoadingMore,
     fetchTypes,
     loadMoreTypes,
+    searchTypes,
     toast,
     confirm,
     sheet,
@@ -62,12 +64,14 @@ function GlobalOverlays() {
       {sheet?.kind === 'addExercise' && (
         <ExercisePicker
           types={types}
+          muscleGroups={muscleGroups}
           typesStatus={typesStatus}
           typesError={typesError}
           typesHasNext={typesHasNext}
           typesLoadingMore={typesLoadingMore}
           fetchTypes={fetchTypes}
           loadMoreTypes={loadMoreTypes}
+          searchTypes={searchTypes}
           onPick={(type) => addExercise(sheet.workoutId, type)}
           onCreateType={(data) => createType(sheet.workoutId, data)}
           onClose={closeSheet}
