@@ -18,6 +18,7 @@ function ExerciseCard({
   onUpdateSet,
   onMove,
   onRemove,
+  onInfo,
 }) {
   const sets = exercise.sets;
   const last = sets[sets.length - 1];
@@ -117,6 +118,15 @@ function ExerciseCard({
           </div>
         </div>
         <div className="row" style={{ gap: 0, flex: '0 0 auto' }}>
+          {type && (
+            <IconButton
+              name="info"
+              size={17}
+              label="Exercise info"
+              onClick={onInfo}
+              style={{ width: 34, height: 34 }}
+            />
+          )}
           <IconButton
             name="chevronUp"
             size={17}

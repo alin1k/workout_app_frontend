@@ -13,6 +13,7 @@ import Dashboard from './screens/Dashboard.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
 import WorkoutForm from './sheets/WorkoutForm.jsx';
 import ExercisePicker from './sheets/ExercisePicker.jsx';
+import ExerciseInfoSheet from './sheets/ExerciseInfoSheet.jsx';
 
 function GlobalOverlays() {
   const {
@@ -76,6 +77,10 @@ function GlobalOverlays() {
           onCreateType={(data) => createType(sheet.workoutId, data)}
           onClose={closeSheet}
         />
+      )}
+
+      {sheet?.kind === 'exerciseInfo' && sheet.type && (
+        <ExerciseInfoSheet type={sheet.type} onClose={closeSheet} />
       )}
 
       {confirm && <Confirm {...confirm} onCancel={closeConfirm} />}
