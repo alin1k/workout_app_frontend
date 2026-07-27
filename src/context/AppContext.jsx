@@ -781,6 +781,9 @@ export function AppProvider({ children }) {
     loadMoreWorkouts,
     fetchWorkout,
     fetchTypes,
+    // Exported so the admin screens can invalidate the catalog cache after
+    // editing or deleting a type.
+    fetchMuscleGroups,
     loadMoreTypes,
     searchTypes,
     clearCurrentWorkout,
