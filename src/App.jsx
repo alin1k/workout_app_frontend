@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { AuthProvider } from './context/AuthContext.jsx';
 import { AppProvider, useApp } from './context/AppContext.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
+import RequireAdmin from './components/RequireAdmin.jsx';
 import StageBackdrop from './components/StageBackdrop.jsx';
 import TabBar from './components/TabBar.jsx';
 import Toast from './components/Toast.jsx';
@@ -11,6 +12,7 @@ import WorkoutsList from './screens/WorkoutsList.jsx';
 import WorkoutDetail from './screens/WorkoutDetail.jsx';
 import Dashboard from './screens/Dashboard.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
+import AdminArea from './screens/AdminArea.jsx';
 import WorkoutForm from './sheets/WorkoutForm.jsx';
 import ExercisePicker from './sheets/ExercisePicker.jsx';
 import ExerciseInfoSheet from './sheets/ExerciseInfoSheet.jsx';
@@ -100,6 +102,17 @@ function ProtectedShell() {
         <Route path="/workouts/:id" element={<WorkoutDetail />} />
         <Route path="/progress" element={<Dashboard />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Mirrors the RequireAuth + shell shape one level up. Must live
+            inside ProtectedShell: the admin screens use useApp() for flash
+            and openConfirm, and rely on GlobalOverlays to render them. */}
+        <Route
+          path="/admin/*"
+          element={
+            <RequireAdmin>
+              <AdminArea />
+            </RequireAdmin>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {showTabBar && <TabBar />}

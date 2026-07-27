@@ -44,6 +44,15 @@ function UserMenu() {
         <div className="menu fade-in" role="menu">
           <div className="menu-header">{user?.username}</div>
           <div className="menu-divider" role="separator" />
+          {user?.is_admin && (
+            <button
+              className="menu-item"
+              role="menuitem"
+              onClick={() => { setOpen(false); navigate('/admin'); }}
+            >
+              <Icon name="layers" size={18} /> Admin
+            </button>
+          )}
           <button className="menu-item" role="menuitem" onClick={onResetPassword}>
             <Icon name="key" size={18} /> Reset password
           </button>
