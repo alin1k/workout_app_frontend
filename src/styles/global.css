@@ -210,6 +210,9 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
   background: oklch(0.28 0.03 150 / 0.42);
   backdrop-filter: blur(3px);
   display: flex; align-items: flex-end; justify-content: center;
+  /* Reserves the notch/status-bar strip: the sheet is capped at 100% of the
+     scrim's content box, so its head can never slide off the top. */
+  padding-top: max(18px, env(safe-area-inset-top));
   animation: scrim-in .2s ease;
 }
 @keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
@@ -218,13 +221,15 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
   width: 100%; max-width: 460px;
   background: var(--bg);
   border-radius: calc(var(--radius) + 12px) calc(var(--radius) + 12px) 0 0;
-  max-height: 92vh; display: flex; flex-direction: column;
+  /* % of the scrim (which is fixed to the *visible* viewport) rather than vh,
+     which on mobile measures the tall URL-bar-hidden viewport. */
+  max-height: 92dvh; display: flex; flex-direction: column;
   animation: sheet-up .26s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow: 0 -8px 40px -8px oklch(0.3 0.05 150 / 0.3);
 }
 @media (min-width: 540px) {
   .scrim { align-items: center; padding: 24px; }
-  .sheet { border-radius: calc(var(--radius) + 8px); max-height: 86vh; animation: sheet-pop .24s cubic-bezier(0.22, 1, 0.36, 1); }
+  .sheet { border-radius: calc(var(--radius) + 8px); max-height: min(86dvh, 100%); animation: sheet-pop .24s cubic-bezier(0.22, 1, 0.36, 1); }
 }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes sheet-pop { from { transform: translateY(14px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
