@@ -82,7 +82,11 @@ function GlobalOverlays() {
       )}
 
       {sheet?.kind === 'exerciseInfo' && sheet.type && (
-        <ExerciseInfoSheet type={sheet.type} onClose={closeSheet} />
+        <ExerciseInfoSheet
+          type={sheet.type}
+          currentWorkoutId={sheet.workoutId}
+          onClose={closeSheet}
+        />
       )}
 
       {confirm && <Confirm {...confirm} onCancel={closeConfirm} />}
