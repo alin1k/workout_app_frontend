@@ -1,24 +1,12 @@
 import { fmtRelative } from '../lib/format.js';
+import Button from './Button.jsx';
+import Icon from './Icon.jsx';
 
 const fmtNum = (v) => v.toLocaleString();
 
-// Read-only replay of every set logged for one exercise type in the most recent
-// workout it appears in. Rendered under the chart in the exercise info sheet.
-// `hasHistory` tells the two empty cases apart: with sets on the chart but no
-// session to show, the only workout with this exercise is the current one.
-function LastSession({ session, hasHistory }) {
-  if (!session || session.sets.length === 0) {
-    if (!hasHistory) return null;
-    return (
-      <div className="chart-card sess-card">
-        <div className="chart-head-label">Last session</div>
-        <div className="muted" style={{ fontSize: 14, marginTop: 6 }}>
-          First time logging this exercise — nothing to compare against yet.
-        </div>
-      </div>
-    );
-  }
-
+// Read-only replay of every set logged for one exercise type in a single past
+// workout.
+function SessionCard({ session, label }) {
   const { sets } = session;
   const totalReps = sets.reduce((sum, s) => sum + s.reps, 0);
   const volume = sets.reduce((sum, s) => sum + (s.weight != null ? s.reps * s.weight : 0), 0);
@@ -28,7 +16,7 @@ function LastSession({ session, hasHistory }) {
     <div className="chart-card sess-card">
       <div className="row between" style={{ marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <div className="chart-head-label">Last session</div>
+          <div className="chart-head-label">{label}</div>
           <div className="sess-name">{session.workout_name}</div>
         </div>
         <span className="sess-when">{fmtRelative(session.date)}</span>
@@ -86,4 +74,61 @@ function LastSession({ session, hasHistory }) {
   );
 }
 
-export default LastSession;
+// Past sessions of one exercise type, newest first, paged with "Load more".
+// Rendered under the chart in the exercise info sheet. `hasHistory` tells the
+// two empty cases apart: with sets on the chart but no session to show, the
+// only workout with this exercise is the current one.
+function SessionHistory({ status, sessions, hasNext, loadingMore, onLoadMore, onRetry, hasHistory }) {
+  if (status === 'loading') {
+    return <div className="chart-card skeleton" style={{ minHeight: 160 }} aria-busy="true" />;
+  }
+  if (status === 'error') {
+    return (
+      <div className="chart-card" style={{ textAlign: 'center' }}>
+        <div className="muted" style={{ fontSize: 14, marginBottom: 10 }}>
+          Couldn’t load past sessions.
+        </div>
+        <Button onClick={onRetry}>
+          <Icon name="repeat" size={16} /> Retry
+        </Button>
+      </div>
+    );
+  }
+  if (status !== 'ready') return null;
+
+  if (sessions.length === 0) {
+    if (!hasHistory) return null;
+    return (
+      <div className="chart-card sess-card">
+        <div className="chart-head-label">Last session</div>
+        <div className="muted" style={{ fontSize: 14, marginTop: 6 }}>
+          First time logging this exercise — nothing to compare against yet.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {sessions.map((session, i) => (
+        <SessionCard
+          key={session.workout_id}
+          session={session}
+          label={i === 0 ? 'Last session' : 'Earlier session'}
+        />
+      ))}
+      {hasNext && (
+        <Button
+          variant="soft"
+          onClick={onLoadMore}
+          disabled={loadingMore}
+          style={{ width: '100%' }}
+        >
+          {loadingMore ? 'Loading…' : 'Load more sessions'}
+        </Button>
+      )}
+    </>
+  );
+}
+
+export default SessionHistory;
