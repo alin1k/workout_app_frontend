@@ -376,6 +376,7 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
    ============================================================ */
 .acct-profile { display: flex; align-items: center; gap: 14px; padding: 16px; }
 .acct-name { font-family: var(--font-display); font-size: 18px; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acct-profile .grow { min-width: 0; }
 .acct-name + .chip { margin-top: 5px; }
 .acct-list { padding: 6px; display: flex; flex-direction: column; gap: 2px; }
 .acct-row {
@@ -394,6 +395,20 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
 .acct-row-go { color: var(--text-muted); }
 .acct-row-danger { color: var(--danger); }
 .acct-row-danger:hover { background: var(--danger-soft); }
+
+/* edit-profile sheet: current picture + a row of generated options */
+.avatar-current { display: flex; align-items: center; gap: 14px; }
+.avatar-options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.avatar-option {
+  border: none; cursor: pointer; background: transparent;
+  padding: 5px; border-radius: 999px;
+  display: flex; justify-content: center;
+  transition: background .15s ease, transform .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.avatar-option .avatar { width: 100%; max-width: 64px; height: auto; }
+.avatar-option:hover { background: var(--accent-soft); }
+.avatar-option:active { transform: scale(0.94); }
 
 /* activity grid (GitHub-style year of workouts) */
 .act-card { padding: 16px; min-height: 192px; display: flex; flex-direction: column; gap: 12px; }

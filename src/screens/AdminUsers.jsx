@@ -134,7 +134,7 @@ function AdminUsers() {
             <div className="col gap12">
               {users.map((u) => (
                 <div key={u.id} className="card card-pad row between fade-in">
-                  <UserAvatar username={u.username} />
+                  <UserAvatar code={u.avatar_code} />
                   <div className="col gap6 grow">
                     <div className="row gap8">
                       <span className="wcard-title" style={{ fontSize: 16 }}>

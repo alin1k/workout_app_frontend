@@ -90,7 +90,15 @@ export function AuthProvider({ children }) {
     navigate('/login');
   }, [clearAuth, navigate]);
 
-  const value = { user, status, login, logout };
+  // PATCH the signed-in user's own profile; the response is the fresh user.
+  const updateProfile = useCallback(async (patch) => {
+    const { data, error } = await authApi.updateProfile(patch);
+    if (error) return { error };
+    setUser(data);
+    return { user: data };
+  }, []);
+
+  const value = { user, status, login, logout, updateProfile };
 
   return (
     <AuthContext.Provider value={value}>

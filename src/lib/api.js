@@ -117,6 +117,9 @@ export const authApi = {
   login: (username, password) =>
     request('POST', '/auth/login', { username, password }, { skipAuthHandler: true }),
   me: () => request('GET', '/auth/me', undefined, { skipAuthHandler: true }),
+  // Goes through the global 401 handler: a 401 here really is an expired
+  // session.
+  updateProfile: (patch) => request('PATCH', '/auth/me', patch),
   // skipAuthHandler because the backend answers 401 for a wrong current
   // password — without the opt-out the global handler would read that as
   // "session expired" and log the user out mid-form.

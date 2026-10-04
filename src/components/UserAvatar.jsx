@@ -5,12 +5,13 @@ import Avatar from 'boring-avatars';
 // contrasting face colour.
 const COLORS = ['#255335', '#3f704d', '#83aa8a', '#cbe7ce', '#e3cfa5', '#cc8463'];
 
-// Deterministic: the same username always renders the same avatar.
-function UserAvatar({ username, size = 40 }) {
+// Deterministic: the same code always renders the same avatar. Pass a
+// user's `avatar_code` — it starts out as their username.
+function UserAvatar({ code, size = 40 }) {
   return (
     <Avatar
       className="avatar"
-      name={username ?? ''}
+      name={code ?? ''}
       variant="beam"
       size={size}
       colors={COLORS}

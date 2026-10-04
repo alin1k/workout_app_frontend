@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useApp } from '../context/AppContext.jsx';
 import Icon from '../components/Icon.jsx';
+import IconButton from '../components/IconButton.jsx';
 import UserAvatar from '../components/UserAvatar.jsx';
 import ActivityGrid from '../components/ActivityGrid.jsx';
 
@@ -26,6 +28,7 @@ function Header() {
 
 function Account() {
   const { user, logout } = useAuth();
+  const { openSheet } = useApp();
   const navigate = useNavigate();
 
   const [activityStatus, setActivityStatus] = useState('loading'); // loading | error | ready
@@ -54,11 +57,17 @@ function Account() {
         <div className="page">
           <div className="col gap14 fade-in">
             <div className="card acct-profile">
-              <UserAvatar username={user?.username} size={52} />
+              <UserAvatar code={user?.avatar_code} size={52} />
               <div className="grow">
                 <div className="acct-name">{user?.username}</div>
                 {user?.is_admin && <span className="chip">admin</span>}
               </div>
+              <IconButton
+                name="pencil"
+                size={19}
+                label="Edit profile"
+                onClick={() => openSheet({ kind: 'editProfile' })}
+              />
             </div>
 
             {activityStatus === 'loading' && (

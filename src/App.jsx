@@ -16,6 +16,7 @@ import AdminArea from './screens/AdminArea.jsx';
 import WorkoutForm from './sheets/WorkoutForm.jsx';
 import ExercisePicker from './sheets/ExercisePicker.jsx';
 import ExerciseInfoSheet from './sheets/ExerciseInfoSheet.jsx';
+import EditProfileSheet from './sheets/EditProfileSheet.jsx';
 
 function GlobalOverlays() {
   const {
@@ -88,6 +89,8 @@ function GlobalOverlays() {
           onClose={closeSheet}
         />
       )}
+
+      {sheet?.kind === 'editProfile' && <EditProfileSheet onClose={closeSheet} />}
 
       {confirm && <Confirm {...confirm} onCancel={closeConfirm} />}
       <Toast message={toast?.message} icon={toast?.icon} />
