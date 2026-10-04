@@ -1,58 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../lib/api.js';
+import { MIN_PASSWORD_LENGTH } from '../lib/constants.js';
 import { useApp } from '../context/AppContext.jsx';
 import AppBar from '../components/AppBar.jsx';
 import Icon from '../components/Icon.jsx';
 import Button from '../components/Button.jsx';
 import Field from '../components/Field.jsx';
-
-// Mirrors the backend's User.set_password rule so most rejections never
-// leave the client.
-const MIN_PASSWORD_LENGTH = 8;
-
-function PasswordInput({ value, onChange, autoComplete, autoFocus, onEnter }) {
-  const [show, setShow] = useState(false);
-  return (
-    <div style={{ position: 'relative' }}>
-      <input
-        type={show ? 'text' : 'password'}
-        className="input"
-        style={{ paddingRight: 48 }}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        placeholder="••••••••"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') onEnter();
-        }}
-      />
-      <button
-        type="button"
-        onClick={() => setShow((v) => !v)}
-        aria-label={show ? 'Hide password' : 'Show password'}
-        style={{
-          position: 'absolute',
-          right: 4,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'var(--text-muted)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 8,
-          borderRadius: 999,
-        }}
-      >
-        <Icon name={show ? 'eyeOff' : 'eye'} size={18} />
-      </button>
-    </div>
-  );
-}
+import PasswordInput from '../components/PasswordInput.jsx';
 
 function ResetPassword() {
   const navigate = useNavigate();
