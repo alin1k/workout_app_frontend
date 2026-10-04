@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import { fmtDay, fmtRelative } from '../lib/format.js';
 import Icon from '../components/Icon.jsx';
 import Button from '../components/Button.jsx';
+import UserAvatar from '../components/UserAvatar.jsx';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -133,6 +134,7 @@ function AdminUsers() {
             <div className="col gap12">
               {users.map((u) => (
                 <div key={u.id} className="card card-pad row between fade-in">
+                  <UserAvatar username={u.username} />
                   <div className="col gap6 grow">
                     <div className="row gap8">
                       <span className="wcard-title" style={{ fontSize: 16 }}>

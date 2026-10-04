@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import Icon from '../components/Icon.jsx';
+import UserAvatar from '../components/UserAvatar.jsx';
 
 function Header() {
   return (
@@ -31,7 +32,7 @@ function Account() {
         <div className="page">
           <div className="col gap14 fade-in">
             <div className="card acct-profile">
-              <span className="acct-avatar">{user?.username?.[0]}</span>
+              <UserAvatar username={user?.username} size={52} />
               <div className="grow">
                 <div className="acct-name">{user?.username}</div>
                 {user?.is_admin && <span className="chip">admin</span>}
