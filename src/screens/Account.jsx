@@ -1,7 +1,10 @@
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../lib/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import Icon from '../components/Icon.jsx';
 import UserAvatar from '../components/UserAvatar.jsx';
+import ActivityGrid from '../components/ActivityGrid.jsx';
 
 function Header() {
   return (
@@ -25,6 +28,25 @@ function Account() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const [activityStatus, setActivityStatus] = useState('loading'); // loading | error | ready
+  const [sessions, setSessions] = useState([]);
+
+  const fetchActivity = useCallback(async () => {
+    setActivityStatus('loading');
+    const { data, error } = await api.get('/dashboard/activity');
+    if (error) {
+      setActivityStatus('error');
+      return;
+    }
+    setSessions(data.sessions);
+    setActivityStatus('ready');
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchActivity();
+  }, [fetchActivity]);
+
   return (
     <>
       <Header />
@@ -38,6 +60,19 @@ function Account() {
                 {user?.is_admin && <span className="chip">admin</span>}
               </div>
             </div>
+
+            {activityStatus === 'loading' && (
+              <div className="card act-card skeleton" aria-busy="true" aria-label="Loading activity" />
+            )}
+            {activityStatus === 'error' && (
+              <div className="card act-card act-error">
+                <span className="muted">Couldn’t load your activity.</span>
+                <button className="btn btn-soft" onClick={fetchActivity}>
+                  <Icon name="repeat" size={16} /> Retry
+                </button>
+              </div>
+            )}
+            {activityStatus === 'ready' && <ActivityGrid sessions={sessions} />}
 
             <div className="card acct-list">
               {user?.is_admin && (
