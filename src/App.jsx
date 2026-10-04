@@ -10,7 +10,7 @@ import Confirm from './components/Confirm.jsx';
 import Login from './screens/Login.jsx';
 import WorkoutsList from './screens/WorkoutsList.jsx';
 import WorkoutDetail from './screens/WorkoutDetail.jsx';
-import Dashboard from './screens/Dashboard.jsx';
+import Account from './screens/Account.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
 import AdminArea from './screens/AdminArea.jsx';
 import WorkoutForm from './sheets/WorkoutForm.jsx';
@@ -97,14 +97,14 @@ function GlobalOverlays() {
 
 function ProtectedShell() {
   const { pathname } = useLocation();
-  const showTabBar = pathname === '/' || pathname === '/progress';
+  const showTabBar = pathname === '/' || pathname === '/account';
 
   return (
     <AppProvider>
       <Routes>
         <Route path="/" element={<WorkoutsList />} />
         <Route path="/workouts/:id" element={<WorkoutDetail />} />
-        <Route path="/progress" element={<Dashboard />} />
+        <Route path="/account" element={<Account />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         {/* Mirrors the RequireAuth + shell shape one level up. Must live
             inside ProtectedShell: the admin screens use useApp() for flash

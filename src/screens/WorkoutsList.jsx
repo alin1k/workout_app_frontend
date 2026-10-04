@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext.jsx';
 import { fmtRelative } from '../lib/format.js';
 import Icon from '../components/Icon.jsx';
 import Button from '../components/Button.jsx';
-import UserMenu from '../components/UserMenu.jsx';
 
 function WorkoutsList() {
   const {
@@ -53,7 +52,6 @@ function WorkoutsList() {
             </div>
           </div>
         </div>
-        <UserMenu />
       </header>
 
       <div className="scroll">

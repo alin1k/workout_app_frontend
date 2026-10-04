@@ -14,7 +14,7 @@ function AdminArea() {
 
   return (
     <>
-      <AppBar subtitle="Manage" title="Admin" onBack={() => navigate('/')} />
+      <AppBar subtitle="Manage" title="Admin" onBack={() => navigate('/account')} />
 
       <div style={{ padding: '0 18px 12px' }}>
         <div className="seg" role="tablist" aria-label="Admin sections">

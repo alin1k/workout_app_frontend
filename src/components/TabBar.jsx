@@ -3,13 +3,13 @@ import Icon from './Icon.jsx';
 
 const TABS = [
   { id: 'workouts', label: 'Workouts', icon: 'calendar', path: '/' },
-  { id: 'progress', label: 'Progress', icon: 'activity', path: '/progress' },
+  { id: 'account', label: 'Account', icon: 'user', path: '/account' },
 ];
 
 function TabBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const active = pathname === '/progress' ? 'progress' : 'workouts';
+  const active = pathname === '/account' ? 'account' : 'workouts';
 
   return (
     <nav className="tabbar">

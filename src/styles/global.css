@@ -108,46 +108,6 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
 .icon-btn:active { transform: scale(0.92); }
 .icon-btn:disabled { opacity: 0.32; cursor: not-allowed; }
 
-/* ---- Dropdown menu ---- */
-.menu-wrap { position: relative; flex: 0 0 auto; }
-.menu {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
-  min-width: 190px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 14px 34px -16px oklch(0.25 0.02 152 / 0.45);
-  padding: 6px;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.menu-item {
-  font-family: var(--font-body);
-  font-weight: 700; font-size: 14.5px;
-  border: none; cursor: pointer;
-  background: transparent; color: var(--text);
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 10px;
-  text-align: left; white-space: nowrap;
-  transition: background .15s ease, color .15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.menu-item:hover { background: var(--surface-alt); }
-.menu-header {
-  font-family: var(--font-body);
-  font-weight: 800; font-size: 14.5px;
-  color: var(--text);
-  padding: 10px 12px 8px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.menu-divider {
-  height: 1px; flex: 0 0 auto;
-  margin: 2px 4px;
-  background: color-mix(in oklch, var(--border) 70%, transparent);
-}
-.menu-item-danger { color: var(--danger); }
-.menu-item-danger:hover { background: var(--danger-soft); }
-
 /* ---- Cards ---- */
 .card {
   background: var(--surface);
@@ -409,7 +369,37 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
 .tab-btn.is-on .tab-ico { background: var(--accent-soft); color: var(--primary-deep); }
 
 /* ============================================================
-   Dashboard / Progress
+   Account
+   ============================================================ */
+.acct-profile { display: flex; align-items: center; gap: 14px; padding: 16px; }
+.acct-avatar {
+  width: 52px; height: 52px; border-radius: 999px; flex: 0 0 auto;
+  background: var(--accent-soft); color: var(--primary-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 21px; font-weight: 800; text-transform: uppercase;
+}
+.acct-name { font-family: var(--font-display); font-size: 18px; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acct-name + .chip { margin-top: 5px; }
+.acct-list { padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.acct-row {
+  font-family: var(--font-body);
+  font-weight: 700; font-size: 15px;
+  border: none; cursor: pointer;
+  background: transparent; color: var(--text);
+  border-radius: calc(var(--radius) - 6px);
+  padding: 14px 12px;
+  display: flex; align-items: center; gap: 12px;
+  text-align: left;
+  transition: background .15s ease, color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.acct-row:hover { background: var(--surface-alt); }
+.acct-row-go { color: var(--text-muted); }
+.acct-row-danger { color: var(--danger); }
+.acct-row-danger:hover { background: var(--danger-soft); }
+
+/* ============================================================
+   Shared screen chrome / progress chart
    ============================================================ */
 .appbar-mark {
   width: 38px; height: 38px; border-radius: 12px; flex: 0 0 auto;
@@ -417,41 +407,7 @@ h1, h2, h3, .display { font-family: var(--font-display); margin: 0; letter-spaci
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 6px 14px -8px var(--primary-deep);
 }
-.empty-orb {
-  width: 88px; height: 88px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
-  background: var(--accent-soft); color: var(--primary-deep);
-}
 .page-dash { padding-bottom: 28px; }
-.dash-stack { display: flex; flex-direction: column; gap: 14px; }
-.dash-section-label { font-size: 11px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); padding: 0 4px; }
-
-/* exercise picker */
-.ex-picker { margin: 0 -18px 0; }
-.ex-picker-row {
-  display: flex; gap: 8px; overflow-x: auto; padding: 2px 18px 6px;
-  scrollbar-width: none;
-}
-.ex-picker-row::-webkit-scrollbar { display: none; }
-.ex-chip {
-  flex: 0 0 auto; cursor: pointer; font-family: var(--font-body);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
-  padding: 8px 14px; border-radius: 13px;
-  border: 1.5px solid var(--border); background: var(--surface); color: var(--text);
-  transition: border-color .14s ease, background .14s ease, transform .1s ease;
-}
-.ex-chip:active { transform: scale(0.97); }
-.ex-chip-name { font-size: 14px; font-weight: 700; white-space: nowrap; }
-.ex-chip-muscle { font-size: 10.5px; font-weight: 700; text-transform: capitalize; color: var(--text-muted); letter-spacing: 0.02em; }
-.ex-chip.is-on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); box-shadow: 0 8px 18px -12px var(--primary-deep); }
-.ex-chip.is-on .ex-chip-muscle { color: color-mix(in oklch, var(--on-primary) 78%, var(--primary)); }
-
-/* stat tiles */
-.stat-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 14px; display: flex; flex-direction: column; gap: 2px; }
-.stat-tile-icon { width: 30px; height: 30px; border-radius: 9px; background: var(--surface-alt); color: var(--primary-deep); display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
-.stat-tile-val { font-family: var(--font-display); font-size: 24px; font-weight: 800; line-height: 1.05; }
-.stat-tile-label { font-size: 12px; font-weight: 700; color: var(--text); }
-.stat-tile-sub { font-size: 11px; font-weight: 600; color: var(--text-muted); }
 
 /* chart card */
 .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 14px 10px; }
